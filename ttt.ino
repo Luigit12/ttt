@@ -14,13 +14,15 @@ void setup() {
   Serial.begin(115200);
 }
 
-void turnboth(float rev1, float rev2) { 
+void turnall(float rev1, float rev2, float rev3) { 
   size_t count1 = 0
   size_t count2 = 0;
+  size_t count3 = 0;
   int steps1 = rev1 * stepsPerRevolution;
   int steps2 = rev2 * stepsPerRevolution;
+  int steps3 = rev3 * stepsPerRevolution;
 
-  while ((count1 < steps1) && (count2 < steps2)) {
+  while ((count1 < steps1) && (count2 < steps2) && (count3 < steps3)) {
     if (count1 < steps1) {
       stepper1.step(1);
       count1++;
@@ -29,9 +31,13 @@ void turnboth(float rev1, float rev2) {
       stepper2.step(1);
       count2++;
     }
+    if (count3 < steps3) {
+      stepper3.step(1);
+      count3++;
+    }
   }
 }
 
 void loop() {
-  turnboth(1, 1);
+  turnboth(1.0f, 1.0f, 1.0f);
 }
