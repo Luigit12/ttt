@@ -70,9 +70,6 @@ void loop()
     Serial.println("received go");
     turnall(2.f, -1.f, 7.f);
   }
-  //  if (Serial.available()) {
-  //    Serial.println(Serial.readStringUntil('\n'));
-  //  }
 
   // ttt positioning system
   // 1. position in the triangle to rope lengths
