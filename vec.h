@@ -6,7 +6,7 @@ class Vec {
 
   Vec(){};
   Vec(float x, float y) { setAt(x, y); };
-  ~Vec();
+  ~Vec(){};
 
   void setAt(float _x, float _y) {
     x = _x;
