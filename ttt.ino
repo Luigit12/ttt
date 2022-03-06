@@ -60,9 +60,15 @@ void turnall(float rev1, float rev2, float rev3) {
 }
 
 void loop() {
-  if (Serial.available() && (Serial.readStringUntil('\n') == "go")) {
-    Serial.println("received go");
-    turnall(2.f, -1.f, 7.f);
+  if (Serial.available()) {
+    char command[64];
+    float rev1, rev2, rev3;
+    command[Serial.readBytesUntil('\n', command, sizeof(command))] = '\0';
+    Serial.print("got command: ");
+    Serial.println(command);
+    if (sscanf(command, "turn %f %f %f", &rev1, &rev2, &rev3) == 3) {
+      turnall(rev1, rev2, rev3);
+    }
   }
 
   // ttt positioning system
