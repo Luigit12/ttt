@@ -28,7 +28,7 @@ class Vec {
     return *this;
   };
 
-  void print(bool newline) {
+  void print(bool newline = false) {
     Serial.printf("Vec(%f, %f)", x, y);
     if (newline) Serial.print("\n");
   };
