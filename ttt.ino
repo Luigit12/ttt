@@ -1,10 +1,20 @@
 #include <Stepper.h>
 
+#include "vec.h"
+
 #define sign(x) ((0 < x) - (x < 0))
 
+/*
+   Units:
+    - distances are stored in meters
+    - times are stored in seconds
+*/
+
+
 const int speed = 15;
-const int stepsPerRevolution =
-    2048;  // change this to fit the number of steps per revolution
+const int stepsPerRevolution = 2048;
+const int bobbinRadius = 7;
+const int ropePerRevolution = 2 * PI * bobbinRadius;
 
 // ESP32 devkit pinout:
 // https://www.mischianti.org/wp-content/uploads/2020/11/ESP32-DOIT-DEV-KIT-v1-pinout-mischianti.png
@@ -13,12 +23,17 @@ Stepper stepper1(stepsPerRevolution, 13, 14, 12, 27);
 Stepper stepper2(stepsPerRevolution, 26, 33, 25, 32);
 Stepper stepper3(stepsPerRevolution, 15, 4, 2, 16);
 
+const float pole_height = 100;
+Vec poles_pos[3] = {Vec(0, 577, pole_height), Vec(-0.5, -289, pole_height), Vec(0.5, -289, pole_height)};
+Vec ttt_pos(0, 0, 0);
+float rope_lengths[3] = {1000, 1000, 1000};
+
 void setup() {
+  Serial.begin(115200);
+
   stepper1.setSpeed(speed);
   stepper2.setSpeed(speed);
   stepper3.setSpeed(speed);
-
-  Serial.begin(9600);
 }
 
 void turnall(float rev1, float rev2, float rev3) {
@@ -59,15 +74,49 @@ void turnall(float rev1, float rev2, float rev3) {
   Serial.println("done");
 }
 
+float pythagoras(Vec v1, Vec v2) {
+  return distance(v1, v2);
+}
+
+void calc_lengths(Vec pos, float dest_lengths[3]) {
+  for (int p = 0; p < 3; p++) {
+    dest_lengths[p] = pythagoras(pos, poles_pos[p]);
+  }
+}
+
+void calc_delta_lengths(Vec dst, float delta_lengths[3]) {
+  float dest_lengths[3];
+  calc_lengths(dst, dest_lengths);
+
+  for (int p = 0; p < 3; p++) {
+    delta_lengths[p] = dest_lengths[p] - rope_lengths[p];
+  }
+}
+
+void moveTo(Vec dst) {
+  float delta_lengths[3];
+  calc_delta_lengths(dst, delta_lengths);
+
+  float delta_revs[3];
+
+  float circumference = 2 * PI * bobbinRadius;
+  for (int p = 0; p < 0; p++) {
+    delta_revs[p] = delta_lengths[p] / circumference;
+  }
+}
+
 void loop() {
   if (Serial.available()) {
     char command[64];
     float rev1, rev2, rev3;
+    float destx, desty, destz;
     command[Serial.readBytesUntil('\n', command, sizeof(command))] = '\0';
     Serial.print("got command: ");
     Serial.println(command);
     if (sscanf(command, "turn %f %f %f", &rev1, &rev2, &rev3) == 3) {
       turnall(rev1, rev2, rev3);
+    } else if (sscanf(command, "moveto %f %f %f", &destx, &desty, &destz) == 3) {
+      moveTo(Vec(destx, desty, destz));
     }
   }
 
