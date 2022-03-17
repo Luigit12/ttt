@@ -10,7 +10,6 @@
     - times are stored in seconds
 */
 
-
 const int speed = 15;
 const int stepsPerRevolution = 2048;
 const int bobbinRadius = 7;
@@ -23,8 +22,9 @@ Stepper stepper1(stepsPerRevolution, 13, 14, 12, 27);
 Stepper stepper2(stepsPerRevolution, 26, 33, 25, 32);
 Stepper stepper3(stepsPerRevolution, 15, 4, 2, 16);
 
-const float pole_height = 100;
-Vec poles_pos[3] = {Vec(0, 577, pole_height), Vec(-0.5, -289, pole_height), Vec(0.5, -289, pole_height)};
+const float pole_height = 530;
+Vec poles_pos[3] = {Vec(0, 577, pole_height), Vec(-500, -289, pole_height),
+                    Vec(500, -289, pole_height)};
 Vec ttt_pos(0, 0, 0);
 float rope_lengths[3] = {1000, 1000, 1000};
 
@@ -74,9 +74,7 @@ void turnall(float rev1, float rev2, float rev3) {
   Serial.println("done");
 }
 
-float pythagoras(Vec v1, Vec v2) {
-  return distance(v1, v2);
-}
+float pythagoras(Vec v1, Vec v2) { return distance(v1, v2); }
 
 void calc_lengths(Vec pos, float dest_lengths[3]) {
   for (int p = 0; p < 3; p++) {
@@ -89,34 +87,50 @@ void calc_delta_lengths(Vec dst, float delta_lengths[3]) {
   calc_lengths(dst, dest_lengths);
 
   for (int p = 0; p < 3; p++) {
+    Serial.printf("Pole nr: %d, dest length: %.2f, current length: %.2f\n", p, dest_lengths[p], rope_lengths[p]);
     delta_lengths[p] = dest_lengths[p] - rope_lengths[p];
   }
 }
 
 void moveTo(Vec dst) {
+  Serial.print("\n**************\nMoving to: ");
+  dst.print(true);
+
   float delta_lengths[3];
   calc_delta_lengths(dst, delta_lengths);
+  Serial.printf("Calculated delta lengths: %.2f %.2f %.2f\n", delta_lengths[0], delta_lengths[1], delta_lengths[2]);
 
   float delta_revs[3];
 
   float circumference = 2 * PI * bobbinRadius;
   for (int p = 0; p < 3; p++) {
     delta_revs[p] = delta_lengths[p] / circumference;
+    rope_lengths[p] += delta_lengths[p];
   }
+
+  Serial.printf("delta revs: %.2f, %.2f, %.2f\n", delta_revs[0], delta_revs[1],
+                delta_revs[2]);
+  Serial.printf("new rope lengths: %.2f, %.2f, %.2f\n", rope_lengths[0], rope_lengths[1], rope_lengths[2]);
+
+  turnall(delta_revs[0], delta_revs[1], delta_revs[2]);
+  ttt_pos.setAt(dst);
 }
 
 void loop() {
   if (Serial.available()) {
     char command[64];
-    float rev1, rev2, rev3;
-    float destx, desty, destz;
+    float tmp1, tmp2, tmp3;
     command[Serial.readBytesUntil('\n', command, sizeof(command))] = '\0';
-    Serial.print("got command: ");
-    Serial.println(command);
-    if (sscanf(command, "turn %f %f %f", &rev1, &rev2, &rev3) == 3) {
-      turnall(rev1, rev2, rev3);
-    } else if (sscanf(command, "moveto %f %f %f", &destx, &desty, &destz) == 3) {
-      moveTo(Vec(destx, desty, destz));
+    Serial.printf("got command: %s\n", command);
+    
+    if (sscanf(command, "turn %f %f %f", &tmp1, &tmp2, &tmp3) == 3) {
+      turnall(tmp1, tmp2, tmp3);
+    } else if (sscanf(command, "move-to %f %f %f", &tmp1, &tmp2, &tmp3) == 3) {
+      moveTo(Vec(tmp1, tmp2, tmp3));
+    } else if (sscanf(command, "set-ropes %f %f %f", &tmp1, &tmp2, &tmp3) == 3) {
+      rope_lengths[0] = tmp1;
+      rope_lengths[1] = tmp2;
+      rope_lengths[2] = tmp3;
     }
   }
 
