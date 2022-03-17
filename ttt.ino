@@ -100,7 +100,7 @@ void moveTo(Vec dst) {
   float delta_revs[3];
 
   float circumference = 2 * PI * bobbinRadius;
-  for (int p = 0; p < 0; p++) {
+  for (int p = 0; p < 3; p++) {
     delta_revs[p] = delta_lengths[p] / circumference;
   }
 }
