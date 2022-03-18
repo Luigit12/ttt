@@ -22,6 +22,8 @@ Stepper stepper1(stepsPerRevolution, 13, 14, 12, 27);
 Stepper stepper2(stepsPerRevolution, 26, 33, 25, 32);
 Stepper stepper3(stepsPerRevolution, 15, 4, 2, 16);
 
+WebServer server(80);
+
 const float pole_height = 530;
 Vec poles_pos[3] = {Vec(0, 577, pole_height), Vec(-500, -289, pole_height),
                     Vec(500, -289, pole_height)};
@@ -31,6 +33,21 @@ float rope_lengths[3] = {1000, 1000, 1000};
 void setup() {
   Serial.begin(115200);
 
+  // Setup wifi: https://randomnerdtutorials.com/esp32-access-point-ap-web-server/
+  WiFi.mode(WIFI_AP)
+  WiFi.softAP("ttt system", "tttxyz");
+  IPAddress IP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(IP);
+
+  if (MDNS.begin("ttt")) {
+    Serial.println("MDNS responder started");
+  }
+
+  server.on("/", handleRoot);
+  server.onNotFound(handleNotFound);
+  server.begin();
+  
   stepper1.setSpeed(speed);
   stepper2.setSpeed(speed);
   stepper3.setSpeed(speed);
@@ -125,9 +142,9 @@ void loop() {
     
     if (sscanf(command, "turn %f %f %f", &tmp1, &tmp2, &tmp3) == 3) {
       turnall(tmp1, tmp2, tmp3);
-    } else if (sscanf(command, "move-to %f %f %f", &tmp1, &tmp2, &tmp3) == 3) {
+    } else if (sscanf(command, "move %f %f %f", &tmp1, &tmp2, &tmp3) == 3) {
       moveTo(Vec(tmp1, tmp2, tmp3));
-    } else if (sscanf(command, "set-ropes %f %f %f", &tmp1, &tmp2, &tmp3) == 3) {
+    } else if (sscanf(command, "ropes %f %f %f", &tmp1, &tmp2, &tmp3) == 3) {
       rope_lengths[0] = tmp1;
       rope_lengths[1] = tmp2;
       rope_lengths[2] = tmp3;
