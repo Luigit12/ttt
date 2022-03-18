@@ -6,7 +6,7 @@
 
 /*
    Units:
-    - distances are stored in meters
+    - distances are (of course) stored in meters
     - times are stored in seconds
 */
 
